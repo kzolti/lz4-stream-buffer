@@ -24,10 +24,10 @@ const { lz4Compress, lz4Decompress } = require('lz4-stream-buffer');
 
 // Compress a buffer to a file
 const buffer = Buffer.from('Hello LZ4!');
-await lz4Compress(buffer, 'output.lz4');
+const compressed = await lz4Compress(buffer);
 
 // Decompress a file to a buffer
-const originalBuffer = await lz4Decompress('output.lz4');
+const originalBuffer = await lz4Decompress(compressed);
 console.log(originalBuffer.toString()); // 'Hello LZ4!'
 ```
 

@@ -8,46 +8,49 @@ const pipe = promisify(pipeline);
 
 const { PassThrough } = require('stream');
 
-async function lz4Compress(buffer, outFile) {
+async function lz4Compress(data) {
   try {
-    const passThrough = new PassThrough();
-    passThrough.end(buffer); 
-    const outStream = fs.createWriteStream(outFile);
-    await pipe(passThrough, createEncoderStream(), outStream);
+    const input = new PassThrough();
+    input.end(data);
+    const output = [];
+    const encoder = createEncoderStream();
+    encoder.on('data', chunk => output.push(chunk));
+    await pipe(input, encoder);
+    return Buffer.concat(output);
   } catch (error) {
-    console.error("Hiba a tömörítés során:", error);
-    try { 
-      await access(outFile, constants.F_OK);
-      await fs.promises.unlink(outFile); 
-    } catch (_) { }
-    throw error; 
+    console.error("uvUHO6YW lz4-stream-buffer encoding error:", error);
+    throw error;
   }
 }
 
-async function lz4Decompress(filename) {
+async function lz4Decompress(compressed) {
   try {
-    const inputStream = fs.createReadStream(filename);
+    const input = new PassThrough();
+    input.end(compressed);
     const output = [];
     const decoder = createDecoderStream();
     decoder.on('data', chunk => output.push(chunk));
-    await pipe(inputStream, decoder);
-    return Buffer.concat(output); 
+    await pipe(input, decoder);
+    return Buffer.concat(output);
   } catch (error) {
-    console.error("Hiba a visszafejtés során:", error);
-    throw error; 
+    console.error("RaNhTdDc lz4-stream-buffer decoding error:", error);
+    throw error;
   }
 }
 
-
-
-// teszt Futtatás
-
-(async () => {
-  const data = await fs.promises.readFile("test.txt");
-  await lz4Compress(data, "test.lz4");
-  const output = await lz4Decompress("test.lz4");
-  await fs.promises.writeFile("test-restored.txt", output);
-  console.log("teszt ok");
-})();
+// test
+// (async () => {
+//   const original="Hello LZ4!";
+//   const compressed = await lz4Compress(Buffer.from(original));
+//   console.log("Compressed data:", compressed);
+//   const decompressed=await lz4Decompress(compressed);
+//   console.log("Decompressed data:", decompressed.toString());
+//   if (decompressed.toString() === original) {
+//     console.log("Test successful!");
+//   }
+//   else {
+//     console.error("Decompression failed!");
+//   }
+// })();
 
 module.exports = { lz4Compress, lz4Decompress };
